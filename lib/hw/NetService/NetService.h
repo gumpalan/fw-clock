@@ -3,6 +3,7 @@
 #include <WiFi.h>
 #include <PubSubClient.h>
 #include <cstdint>
+#include "../../include/config.h"
 
 // =============================================================================
 // NetService.h — WiFi + MQTT (PubSubClient) dengan reconnect non-blocking
