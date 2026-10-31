@@ -4,9 +4,12 @@
 #include "../../include/config.h"
 
 // =============================================================================
-// LedStrip.h — Kontrol LED strip 12V via PWM LEDC (Arduino-ESP32 3.x)
-// LEDC API: ledcAttach(pin, freq, resolution) + ledcWrite(pin, duty)
+// LedStrip.h — Kontrol LED strip 12V via PWM LEDC (Arduino-ESP32 2.x)
+// LEDC API 2.x: ledcSetup(channel, freq, res) + ledcAttachPin(pin, ch) + ledcWrite(ch, duty)
 // =============================================================================
+
+// Channel LEDC yang dipakai (0-15, pilih yang tidak konflik dengan lib lain)
+#define LED_LEDC_CHANNEL 0
 
 class LedStrip {
 public:

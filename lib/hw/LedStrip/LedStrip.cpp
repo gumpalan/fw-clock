@@ -24,8 +24,9 @@ void LedStrip::buildGamma(float gamma) {
 }
 
 void LedStrip::begin() {
-    // Arduino-ESP32 3.x: ledcAttach(pin, freq, resolution)
-    ledcAttach(pin_, freq_hz_, resolution_bits_);
+    // Arduino-ESP32 2.x LEDC API
+    ledcSetup(LED_LEDC_CHANNEL, freq_hz_, resolution_bits_);
+    ledcAttachPin(pin_, LED_LEDC_CHANNEL);
     applyDuty(0);
 }
 
@@ -35,7 +36,7 @@ void LedStrip::applyDuty(uint32_t duty) {
     uint32_t allowed = static_cast<uint32_t>(
         static_cast<float>(dmax) * static_cast<float>(max_duty_pct_) / 100.0f + 0.5f);
     if (duty > allowed) duty = allowed;
-    ledcWrite(pin_, duty);
+    ledcWrite(LED_LEDC_CHANNEL, duty);
 }
 
 void LedStrip::setBrightness(uint8_t percent) {

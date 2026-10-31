@@ -33,7 +33,7 @@ public:
                  bool retained = false);
 
     bool wifiOk() const;
-    bool mqttOk() const { return mqtt_.connected(); }
+    bool mqttOk() { return mqtt_.connected(); }
 
     // Isi IP string ke buf[16].
     void ipStr(char* buf) const;
