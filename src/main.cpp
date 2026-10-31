@@ -333,7 +333,12 @@ void loop() {
         lcd_page = 0;
     }
 
-    renderLcd(now);
+    // Render LCD dibatasi setiap 200ms agar bus I2C stabil dan tidak flicker
+    static uint32_t last_lcd_render_ms = 0;
+    if (now - last_lcd_render_ms >= 200) {
+        last_lcd_render_ms = now;
+        renderLcd(now);
+    }
 
     if (now - last_sensor_pub_ms >= MQTT_SENSOR_PUB_MS) {
         publishSensor(now);

@@ -49,9 +49,10 @@ void Buttons::begin() {
 
     for (int i = 0; i < 4; ++i) {
 #if TOUCH_SENSOR_ACTIVE_HIGH
-        pinMode(pins_[i], INPUT);        // sensor sentuh punya push-pull output sendiri
+        // INPUT_PULLDOWN agar pin yang belum terhubung atau saat idle tidak mengambang (floating)
+        pinMode(pins_[i], INPUT_PULLDOWN);
 #else
-        pinMode(pins_[i], INPUT_PULLUP); // tombol butuh pullup internal
+        pinMode(pins_[i], INPUT_PULLUP); // tombol mekanis butuh pullup internal
 #endif
         isr_args[i].queue    = queue_;
         isr_args[i].pin_idx  = static_cast<uint8_t>(i);
