@@ -12,39 +12,39 @@ TimeService::TimeService(const char* tz,
 {}
 
 void TimeService::begin() {
-    doSync();
+    // Mulai SNTP — tidak blocking. Sinkronisasi diselesaikan di tick().
+    configTzTime(tz_, server1_, server2_);
+    last_sync_ms_ = millis();
+    Serial.println("[NTP] SNTP dimulai, menunggu sinkronisasi...");
 }
 
 void TimeService::tick(uint32_t now_ms) {
-    if (now_ms - last_sync_ms_ >= sync_interval_ms_) {
-        doSync();
-    }
-}
+    if (!synced_) {
+        // Cek setiap 500ms sampai berhasil sinkron
+        if (now_ms - last_sync_ms_ < 500) return;
+        last_sync_ms_ = now_ms;
 
-void TimeService::doSync() {
-    // configTzTime mengatur timezone dan memulai SNTP
-    configTzTime(tz_, server1_, server2_);
-
-    // Tunggu konfirmasi sinkronisasi, maksimal 5 detik non-blocking
-    // (kita hanya set flag; verifikasi via now())
-    last_sync_ms_ = millis();
-
-    // Cek apakah waktu sudah valid (tahun > 2020)
-    struct tm tm_info;
-    if (getLocalTime(&tm_info, 0)) {
-        if (tm_info.tm_year + 1900 > 2020) {
+        struct tm tm_info;
+        if (getLocalTime(&tm_info, 0) && tm_info.tm_year + 1900 > 2020) {
             synced_ = true;
             Serial.printf("[NTP] Sinkron: %04d-%02d-%02d %02d:%02d:%02d\n",
                           tm_info.tm_year + 1900, tm_info.tm_mon + 1, tm_info.tm_mday,
                           tm_info.tm_hour, tm_info.tm_min, tm_info.tm_sec);
         }
+        return;
+    }
+
+    // Sudah sinkron — sync ulang tiap sync_interval_ms_
+    if (now_ms - last_sync_ms_ >= sync_interval_ms_) {
+        configTzTime(tz_, server1_, server2_);
+        last_sync_ms_ = now_ms;
+        // synced_ tetap true; jam sistem terus berjalan via RTC internal ESP32
     }
 }
 
 TimeSnapshot TimeService::now() const {
     TimeSnapshot snap{};
     struct tm tm_info;
-    // getLocalTime dengan timeout 0 = non-blocking
     if (!getLocalTime(&tm_info, 0) || tm_info.tm_year + 1900 <= 2020) {
         snap.synced = false;
         return snap;

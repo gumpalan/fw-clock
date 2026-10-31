@@ -128,13 +128,14 @@ bool LcdPcf8574::begin() {
 }
 
 void LcdPcf8574::printAt(uint8_t col, uint8_t row, const char* text) {
-    if (!connected_) return;
+    if (!connected_ || row >= 2 || col >= 16) return;
     setCursor(col, row);
     size_t len = strlen(text);
     uint8_t maxcols = LCD_COLS - col;
     for (uint8_t i = 0; i < maxcols; ++i) {
         uint8_t ch = (i < len) ? (uint8_t)text[i] : ' ';
         writeChar(ch);
+        cache_[row][col + i] = (char)ch; // sinkronkan cache agar update() tidak menulis ulang
     }
 }
 
@@ -150,15 +151,22 @@ void LcdPcf8574::update(const char row0[17], const char row1[17]) {
     const char* rows[2] = {row0, row1};
 
     for (uint8_t r = 0; r < 2; ++r) {
-        // Cek apakah baris berubah — hanya render yang berubah (cegah flicker)
-        if (memcmp(cache_[r], rows[r], 16) == 0) continue;
+        uint8_t col = 0;
+        while (col < 16) {
+            // Cari kolom pertama yang berubah
+            if (cache_[r][col] == rows[r][col]) { col++; continue; }
 
-        setCursor(0, r);
-        for (uint8_t c = 0; c < 16; ++c) {
-            uint8_t ch = (uint8_t)rows[r][c];
-            // Simbol derajat: 0xDF di ROM HD44780 standar
-            writeChar(ch);
+            // Tulis run berurutan dari kolom ini
+            uint8_t start = col;
+            while (col < 16 && cache_[r][col] != rows[r][col]) col++;
+            uint8_t run = col - start;
+
+            setCursor(start, r);
+            for (uint8_t c = 0; c < run; ++c) {
+                writeChar((uint8_t)rows[r][start + c]);
+            }
+            for (uint8_t c = start; c < start + run; ++c)
+                cache_[r][c] = rows[r][c];
         }
-        memcpy(cache_[r], rows[r], 17);
     }
 }

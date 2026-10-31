@@ -39,6 +39,4 @@ private:
     uint32_t    sync_interval_ms_;
     uint32_t    last_sync_ms_;
     bool        synced_;
-
-    void doSync();
 };

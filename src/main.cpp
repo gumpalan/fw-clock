@@ -83,6 +83,10 @@ static uint32_t sleep_timer_end_ms  = 0;
 
 static uint32_t last_sensor_pub_ms  = 0;
 
+// Pesan sementara di baris 2 (non-blocking pengganti delay(1000))
+static char     lcd_msg[17]         = {};
+static uint32_t lcd_msg_end_ms      = 0;
+
 static char lcd_row[2][17];
 
 // =============================================================================
@@ -115,6 +119,20 @@ static void renderLcd(uint32_t now_ms) {
             break;
         }
         default: lcd_page = 0; formatter->page0(td, sd, lcd_row); break;
+    }
+
+    // Pesan sementara (dari tombol): override baris 2 selama 1 detik, non-blocking
+    if (lcd_msg_end_ms != 0) {
+        if (now_ms >= lcd_msg_end_ms) {
+            lcd_msg[0]     = '\0';
+            lcd_msg_end_ms = 0;
+        } else {
+            size_t len = strlen(lcd_msg);
+            if (len > 16) len = 16;
+            memcpy(lcd_row[1], lcd_msg, len);
+            for (size_t i = len; i < 16; ++i) lcd_row[1][i] = ' ';
+            lcd_row[1][16] = '\0';
+        }
     }
 
     lcd.update(lcd_row[0], lcd_row[1]);
@@ -189,13 +207,13 @@ static void handleButton(BtnPress& press, uint32_t now_ms) {
         } else {
             if (sleep_timer_active) {
                 sleep_timer_active = false;
-                lcd.printAt(0, 1, "Timer dibatalkan");
-                delay(1000);
+                snprintf(lcd_msg, sizeof(lcd_msg), "Timer dibatalkan");
+                lcd_msg_end_ms = now_ms + 1000UL;
             } else if (led.isOn()) {
                 sleep_timer_active = true;
                 sleep_timer_end_ms = now_ms + ((uint32_t)SLEEP_TIMER_MIN * 60000UL);
-                lcd.printAt(0, 1, "Timer aktif     ");
-                delay(1000);
+                snprintf(lcd_msg, sizeof(lcd_msg), "Timer aktif %dm", SLEEP_TIMER_MIN);
+                lcd_msg_end_ms = now_ms + 1000UL;
             }
         }
         break;
@@ -207,8 +225,8 @@ static void handleButton(BtnPress& press, uint32_t now_ms) {
         } else {
             publishSensor(now_ms);
             last_sensor_pub_ms = now_ms;
-            lcd.printAt(0, 1, "Kirim data...   ");
-            delay(1000);
+            snprintf(lcd_msg, sizeof(lcd_msg), "Kirim data...   ");
+            lcd_msg_end_ms = now_ms + 1000UL;
         }
         break;
 
