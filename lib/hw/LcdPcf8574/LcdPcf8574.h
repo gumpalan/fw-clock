@@ -2,6 +2,8 @@
 #include <Arduino.h>
 #include <Wire.h>
 #include <cstdint>
+#include "../../include/pins.h"
+#include "../../include/config.h"
 
 // =============================================================================
 // LcdPcf8574.h — Driver LCD 16x2 via backpack PCF8574 (mode 4-bit)
