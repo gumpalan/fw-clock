@@ -80,15 +80,19 @@ ESP32 GND  --- DHT11 GND
 ESP32 GPIO4 -- DHT11 DATA -- [4.7kOhm pull-up ke 3.3V]
 ```
 
-### Tombol
+### Sensor Sentuh (TTP223)
 
 ```
-ESP32 GPIO32 --- Tombol LAMP   --- GND
-ESP32 GPIO33 --- Tombol SENSOR --- GND
-ESP32 GPIO25 --- Tombol UP     --- GND
-ESP32 GPIO26 --- Tombol DOWN   --- GND
-(INPUT_PULLUP aktif, tombol ke GND)
+ESP32 3.3V --- VCC TTP223
+ESP32 GND  --- GND TTP223
+ESP32 GPIO32 - I/O Tombol LAMP   (output aktif HIGH)
+ESP32 GPIO33 - I/O Tombol SENSOR (output aktif HIGH)
+ESP32 GPIO25 - I/O Tombol UP     (output aktif HIGH)
+ESP32 GPIO26 - I/O Tombol DOWN   (output aktif HIGH)
 ```
+
+Default konfigurasi di `config.h`: `TOUCH_SENSOR_ACTIVE_HIGH true` (pinMode `INPUT`).
+Jika menggunakan tombol mekanis ke GND, ubah menjadi `false` (pinMode `INPUT_PULLUP`).
 
 ---
 

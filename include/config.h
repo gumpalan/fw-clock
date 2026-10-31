@@ -39,7 +39,11 @@
 // 0 = nonaktif. Satuan menit.
 #define SLEEP_TIMER_MIN     30
 
-// --- Tombol ------------------------------------------------------------------
+// --- Tombol / Sensor Sentuh --------------------------------------------------
+// true  = sensor sentuh TTP223 (aktif HIGH, idle LOW, pinMode INPUT)
+// false = tombol mekanis ke GND (aktif LOW, idle HIGH, pinMode INPUT_PULLUP)
+#define TOUCH_SENSOR_ACTIVE_HIGH true
+
 #define BTN_DEBOUNCE_MS     40UL
 #define BTN_LONG_PRESS_MS   800UL
 #define BTN_BRIGHTNESS_STEP 10   // langkah naik/turun kecerahan (%)

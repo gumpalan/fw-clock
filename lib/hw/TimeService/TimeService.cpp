@@ -15,7 +15,6 @@ void TimeService::begin() {
     // Mulai SNTP — tidak blocking. Sinkronisasi diselesaikan di tick().
     configTzTime(tz_, server1_, server2_);
     last_sync_ms_ = millis();
-    Serial.println("[NTP] SNTP dimulai, menunggu sinkronisasi...");
 }
 
 void TimeService::tick(uint32_t now_ms) {

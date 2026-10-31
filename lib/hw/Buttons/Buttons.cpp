@@ -1,5 +1,6 @@
 #include "Buttons.h"
 #include <Arduino.h>
+#include "../../include/config.h"
 
 // Struktur argument ISR per tombol
 struct IsrArg {
@@ -14,9 +15,17 @@ static IsrArg isr_args[4];
 void IRAM_ATTR Buttons::isrHandler(void* arg) {
     IsrArg* a = static_cast<IsrArg*>(arg);
     BtnRawEvent ev;
-    ev.pin_idx  = a->pin_idx;
-    ev.pressed  = (digitalRead(a->gpio_pin) == LOW); // aktif LOW
-    ev.tick_ms  = (uint32_t)(esp_timer_get_time() / 1000ULL);
+    ev.pin_idx = a->pin_idx;
+
+#if TOUCH_SENSOR_ACTIVE_HIGH
+    // Sensor sentuh TTP223: disentuh = HIGH
+    ev.pressed = (digitalRead(a->gpio_pin) == HIGH);
+#else
+    // Tombol mekanis ke GND: ditekan = LOW
+    ev.pressed = (digitalRead(a->gpio_pin) == LOW);
+#endif
+
+    ev.tick_ms = (uint32_t)(esp_timer_get_time() / 1000ULL);
 
     BaseType_t higher_prio = pdFALSE;
     xQueueSendFromISR(a->queue, &ev, &higher_prio);
@@ -30,7 +39,8 @@ Buttons::Buttons(const uint8_t pins[4],
 {
     for (int i = 0; i < 4; ++i) pins_[i] = pins[i];
     for (int i = 0; i < 4; ++i) {
-        state_[i] = {true, 0, 0, false}; // stable=true (tidak ditekan, pullup HIGH)
+        // stable=false (kondisi awal tidak disentuh / tidak ditekan)
+        state_[i] = {false, 0, 0, false};
     }
 }
 
@@ -38,7 +48,11 @@ void Buttons::begin() {
     queue_ = xQueueCreate(16, sizeof(BtnRawEvent));
 
     for (int i = 0; i < 4; ++i) {
-        pinMode(pins_[i], INPUT_PULLUP);
+#if TOUCH_SENSOR_ACTIVE_HIGH
+        pinMode(pins_[i], INPUT);        // sensor sentuh punya push-pull output sendiri
+#else
+        pinMode(pins_[i], INPUT_PULLUP); // tombol butuh pullup internal
+#endif
         isr_args[i].queue    = queue_;
         isr_args[i].pin_idx  = static_cast<uint8_t>(i);
         isr_args[i].gpio_pin = pins_[i];
