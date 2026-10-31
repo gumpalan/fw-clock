@@ -1,6 +1,7 @@
 #pragma once
 #include <Arduino.h>
 #include <cstdint>
+#include "../../include/config.h"
 
 // =============================================================================
 // LedStrip.h — Kontrol LED strip 12V via PWM LEDC (Arduino-ESP32 3.x)
