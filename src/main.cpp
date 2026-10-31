@@ -126,13 +126,17 @@ static void renderLcd(uint32_t now_ms) {
 static void publishSensor(uint32_t now_ms) {
     if (!net || !net->mqttOk()) return;
     const DhtReading& rd = sensor.reading();
-    char buf[96];
-    bool ok = logic::Payload::sensorState(
-        rd.valid ? rd.temperature : NAN,
-        rd.valid ? rd.humidity    : NAN,
-        (uint32_t)(now_ms / 1000UL),
-        buf, sizeof(buf));
-    if (ok) net->publish(topics->sensorState(), buf, false);
+    char buf[16];
+
+    // Publish suhu — angka mentah
+    if (logic::Payload::sensorValue(rd.valid ? rd.temperature : NAN, buf, sizeof(buf)))
+        net->publish(topics->sensorTemp(), buf, false);
+
+    // Publish kelembapan — angka mentah
+    if (logic::Payload::sensorValue(rd.valid ? rd.humidity : NAN, buf, sizeof(buf)))
+        net->publish(topics->sensorHumidity(), buf, false);
+
+    (void)now_ms; // tidak dipakai setelah refactor
 }
 
 // =============================================================================

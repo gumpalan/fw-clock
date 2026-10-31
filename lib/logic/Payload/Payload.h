@@ -26,10 +26,10 @@ struct LampCmd {
 
 class Payload {
 public:
-    // Serialize sensor state ke JSON string. Return false jika gagal.
-    // out harus buffer >= 96 byte.
-    static bool sensorState(float temperature, float humidity,
-                            uint32_t ts, char* out, size_t out_len);
+    // Serialize nilai sensor tunggal ke string angka mentah (tanpa satuan).
+    // Sesuai kontrak svc-iot: payload numerik = angka string, bukan JSON bersatuan.
+    // out >= 16 byte. Return false jika NaN.
+    static bool sensorValue(float value, char* out, size_t out_len);
 
     // Serialize lamp state ke JSON string. out >= 48 byte.
     static bool lampState(bool power, uint8_t brightness,

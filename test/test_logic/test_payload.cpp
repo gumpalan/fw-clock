@@ -5,16 +5,21 @@
 
 using namespace logic;
 
-// --- sensorState: JSON valid ---
+// --- sensorValue: angka mentah suhu ---
 void test_sensor_state_valid_json() {
-    char buf[128];
-    bool ok = Payload::sensorState(27.0f, 61.0f, 1730000000UL, buf, sizeof(buf));
+    char buf[16];
+    bool ok = Payload::sensorValue(27.0f, buf, sizeof(buf));
     TEST_ASSERT_TRUE(ok);
-    JsonDocument doc;
-    TEST_ASSERT_TRUE(deserializeJson(doc, buf) == DeserializationError::Ok);
-    TEST_ASSERT_FLOAT_WITHIN(0.01f, 27.0f, doc["temperature"].as<float>());
-    TEST_ASSERT_FLOAT_WITHIN(0.01f, 61.0f, doc["humidity"].as<float>());
-    TEST_ASSERT_EQUAL_UINT32(1730000000UL, doc["ts"].as<uint32_t>());
+    // Payload harus berupa string angka, bisa di-parse ke float
+    float v = atof(buf);
+    TEST_ASSERT_FLOAT_WITHIN(0.1f, 27.0f, v);
+}
+
+// --- sensorValue: NaN return false ---
+void test_sensor_value_nan() {
+    char buf[16];
+    bool ok = Payload::sensorValue(NAN, buf, sizeof(buf));
+    TEST_ASSERT_FALSE(ok);
 }
 
 // --- lampState: JSON valid ---
@@ -98,6 +103,7 @@ void test_parse_empty() {
 
 void run_payload_tests() {
     RUN_TEST(test_sensor_state_valid_json);
+    RUN_TEST(test_sensor_value_nan);
     RUN_TEST(test_lamp_state_valid_json);
     RUN_TEST(test_discovery_valid_json);
     RUN_TEST(test_parse_plain_on);

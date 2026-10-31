@@ -7,20 +7,11 @@
 
 namespace logic {
 
-bool Payload::sensorState(float temperature, float humidity,
-                           uint32_t ts, char* out, size_t out_len) {
-    JsonDocument doc;
-    if (std::isnan(temperature) || std::isnan(humidity)) {
-        // Tetap kirim dengan null agar subscriber tahu sensor mati
-        doc["temperature"] = nullptr;
-        doc["humidity"]    = nullptr;
-    } else {
-        doc["temperature"] = temperature;
-        doc["humidity"]    = humidity;
-    }
-    doc["ts"] = ts;
-    size_t n = serializeJson(doc, out, out_len);
-    return n > 0 && n < out_len;
+bool Payload::sensorValue(float value, char* out, size_t out_len) {
+    if (std::isnan(value)) return false;
+    // Angka mentah: satu desimal, tanpa satuan
+    int n = snprintf(out, out_len, "%.1f", value);
+    return n > 0 && static_cast<size_t>(n) < out_len;
 }
 
 bool Payload::lampState(bool power, uint8_t brightness,
@@ -41,23 +32,22 @@ bool Payload::discovery(const char* id, const char* fw_version,
 
     JsonArray caps = doc["capabilities"].to<JsonArray>();
 
-    // Sensor suhu
+    // Sensor suhu — topik terpisah, payload angka mentah
     JsonObject temp = caps.add<JsonObject>();
-    char topic[80];
-    snprintf(topic, sizeof(topic), "gumpalan/%s/sensor/state", id);
+    char temp_topic[80], hum_topic[80];
+    snprintf(temp_topic, sizeof(temp_topic), "gumpalan/%s/sensor/temperature", id);
+    snprintf(hum_topic,  sizeof(hum_topic),  "gumpalan/%s/sensor/humidity",    id);
     temp["type"]        = "sensor";
     temp["key"]         = "temperature";
     temp["unit"]        = "C";
-    temp["state_topic"] = topic;
-    temp["value_path"]  = "temperature";
+    temp["state_topic"] = temp_topic;
 
-    // Sensor kelembapan
+    // Sensor kelembapan — topik terpisah
     JsonObject hum = caps.add<JsonObject>();
     hum["type"]        = "sensor";
     hum["key"]         = "humidity";
     hum["unit"]        = "%";
-    hum["state_topic"] = topic;  // topik sama dengan suhu
-    hum["value_path"]  = "humidity";
+    hum["state_topic"] = hum_topic;
 
     // Lampu switch
     char state_topic[80], cmd_topic[80];
@@ -69,7 +59,6 @@ bool Payload::discovery(const char* id, const char* fw_version,
     sw["key"]           = "lamp";
     sw["state_topic"]   = state_topic;
     sw["command_topic"] = cmd_topic;
-    sw["value_path"]    = "power";
 
     // Dimmer
     JsonObject dim = caps.add<JsonObject>();
@@ -77,7 +66,6 @@ bool Payload::discovery(const char* id, const char* fw_version,
     dim["key"]           = "brightness";
     dim["state_topic"]   = state_topic;
     dim["command_topic"] = cmd_topic;
-    dim["value_path"]    = "brightness";
     dim["min"]           = 0;
     dim["max"]           = 100;
 
