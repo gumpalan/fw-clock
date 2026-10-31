@@ -35,7 +35,7 @@ public:
     static bool lampState(bool power, uint8_t brightness,
                           char* out, size_t out_len);
 
-    // Serialize discovery payload. out >= 512 byte.
+    // Serialize discovery payload. out >= 768 byte.
     static bool discovery(const char* id, const char* fw_version,
                           char* out, size_t out_len);
 
